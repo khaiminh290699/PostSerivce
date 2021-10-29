@@ -1,14 +1,14 @@
-const { ProgressingModel, PostModel } = require("../db");
+const { ModelProgressing, ModelPost } = require("../db");
 
 async function reprogress(data, db, rabbitmq) {
   const { id } = data.params;
-  const postModel = new PostModel(db);
+  const modelPost = new ModelPost(db);
 
-  const progressingModel = new ProgressingModel(db);
+  const modelProgressing = new ModelProgressing(db);
 
-  let progressing = await progressingModel.findOne({ id });
+  let progressing = await modelProgressing.findOne({ id });
 
-  const post = await postModel.findOne({ id: progressing.post_id })
+  const post = await modelPost.findOne({ id: progressing.post_id })
   if (post.is_deleted) {
     return { status: 400, message: "Post was delete" }
   }
@@ -18,7 +18,7 @@ async function reprogress(data, db, rabbitmq) {
   }
 
   progressing.status = "waiting";
-  progressing = await progressingModel.updateOne(progressing);
+  progressing = await modelProgressing.updateOne(progressing);
 
   await rabbitmq.produce({ progressing }, { exchange: "background", queue: "create_post" })
 

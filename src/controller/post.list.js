@@ -1,4 +1,4 @@
-const { PostModel } = require("../db");
+const { ModelPost } = require("../db");
 
 async function postList(data, db) {
   const { wheres = [], order = {}, pageSize, pageIndex, mode } = data.params;
@@ -8,13 +8,13 @@ async function postList(data, db) {
     return { status: 403, message: "Not permission" }
   }
   
-  const postModel = new PostModel(db);
+  const modelPost = new ModelPost(db);
 
-  const query = postModel.query().joinRaw(`
+  const query = modelPost.query().joinRaw(`
     JOIN users ON users.id = posts.user_id
   `)
   .select(
-    postModel.DB.raw(`
+    modelPost.DB.raw(`
       COUNT(*) OVER(),
       posts.*,
       substring(regexp_replace(posts.content, E'<[^>]+>', '', 'gi') from 0 for 100) AS content,
@@ -26,7 +26,7 @@ async function postList(data, db) {
     query.where("user_id", "=", user_id);
   }
 
-  const posts = await postModel.queryByCondition(query, wheres, pageIndex, pageSize, order);
+  const posts = await modelPost.queryByCondition(query, wheres, pageIndex, pageSize, order);
   const total = posts[0] ? +posts[0].count : 0;
   return { status: 200, data: { posts, total } };
 }

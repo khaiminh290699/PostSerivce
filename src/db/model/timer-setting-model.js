@@ -1,7 +1,7 @@
 const Model = require(".");
 
-class TimerSettingModel extends Model {
+class ModelTimerSetting extends Model {
   tableName = "timer_setting";
 }
 
-module.exports = TimerSettingModel;
+module.exports = ModelTimerSetting;

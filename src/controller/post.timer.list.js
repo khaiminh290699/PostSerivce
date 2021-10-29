@@ -1,10 +1,10 @@
-const { SettingModel } = require("../db");
+const { ModelSetting } = require("../db");
 const moment = require("moment");
 
 async function listTimer(data, db) {
   const { inDate, wheres = [], pageIndex, pageSize, order = {}, mode } = data.params;
   const { id: user_id, isAdmin } = data.meta.user
-  const settingModel = new SettingModel(db);
+  const modelSetting = new ModelSetting(db);
 
   if (mode === "admin" && !isAdmin) {
     return { status: 403, message: "Not permission" }
@@ -13,9 +13,9 @@ async function listTimer(data, db) {
   
   order.timer_setting = 1;
 
-  const query = settingModel.query()
+  const query = modelSetting.query()
     .select(
-      settingModel.DB.raw(`
+      modelSetting.DB.raw(`
         COUNT(*) OVER(),
         posts.title,
         posts.id AS post_id,
@@ -66,7 +66,7 @@ async function listTimer(data, db) {
     `, { user_id })
   }
 
-  const timerPosts = await settingModel.queryByCondition(query, wheres, pageIndex, pageSize, order);
+  const timerPosts = await modelSetting.queryByCondition(query, wheres, pageIndex, pageSize, order);
   const totalCount = timerPosts[0] ? +timerPosts[0].count : 0;
   return { status: 200, data: { timerPosts, totalCount } };
 }

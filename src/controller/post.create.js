@@ -1,4 +1,4 @@
-const { PostModel, Model, SettingModel, PostForumModel, ProgressingModel, PostingStatusModel, TimerSettingModel } = require("../db");
+const { ModelPost, Model, ModelSetting, ModelPostForum, ModelProgressing, ModelPostingStatus, ModelTimerSetting } = require("../db");
 const moment = require("moment");
 
 async function postCreate(data, db, rabbitmq) {
@@ -6,15 +6,15 @@ async function postCreate(data, db, rabbitmq) {
   const { id: user_id } = data.meta.user
   const model = new Model(db);
 
-  const postModel = new PostModel(db);
-  const existTitle = await postModel.query().joinRaw(`
+  const modelPost = new ModelPost(db);
+  const existTitle = await modelPost.query().joinRaw(`
       JOIN post_forum ON post_forum.post_id = posts.id
     `)
     .whereRaw(`
       posts.title = :title
       AND posts.is_deleted = false
     `, { title: post.title })
-    .whereIn(postModel.DB.raw(`post_forum.forum_id`), forums)
+    .whereIn(modelPost.DB.raw(`post_forum.forum_id`), forums)
     .first();
 
   if (existTitle) {
@@ -22,12 +22,12 @@ async function postCreate(data, db, rabbitmq) {
   }
 
   const result = await model.openTransaction(async (trx) => {
-    const postModel = new PostModel(db, trx);
-    const settingModal = new SettingModel(db, trx);
-    const postForumModel = new PostForumModel(db, trx);
-    const progressingModel = new ProgressingModel(db, trx);
-    const postingStatusModel = new PostingStatusModel(db, trx);
-    const timerSettingModel = new TimerSettingModel(db, trx);
+    const modelPost = new ModelPost(db, trx);
+    const modelSetting = new ModelSetting(db, trx);
+    const modelPostForum = new ModelPostForum(db, trx);
+    const modelProgressing = new ModelProgressing(db, trx);
+    const modelPostingStatus = new ModelPostingStatus(db, trx);
+    const modelTimerSetting = new ModelTimerSetting(db, trx);
 
     const timerSettings = settings.reduce((list, setting) => {
       if (setting.timers) {
@@ -37,10 +37,10 @@ async function postCreate(data, db, rabbitmq) {
     }, [])
 
     // create post;
-    const newPost = await postModel.insertOne({ ...post, user_id });
+    const newPost = await modelPost.insertOne({ ...post, user_id });
     
-    const settingPost = await settingModal.query().insert(settings.map((setting) => ({ account_id: setting.account_id, create_type: setting.create_type, post_id: newPost.id }))).returning(["*"]);
-    await timerSettingModel.query().insert(timerSettings.map(timerSetting => {
+    const settingPost = await modelSetting.query().insert(settings.map((setting) => ({ account_id: setting.account_id, create_type: setting.create_type, post_id: newPost.id }))).returning(["*"]);
+    await modelTimerSetting.query().insert(timerSettings.map(timerSetting => {
       const setting = settingPost.filter((setting) => setting.account_id === timerSetting.account_id)[0];
       return {
         setting_id: setting.id,
@@ -49,12 +49,12 @@ async function postCreate(data, db, rabbitmq) {
         to_date: moment(timerSetting.to_date).endOf("date")
       }
     }))
-    await postForumModel.query().insert(forums.map((forum) => ({ forum_id: forum, post_id: newPost.id }))).returning(["*"])
+    await modelPostForum.query().insert(forums.map((forum) => ({ forum_id: forum, post_id: newPost.id }))).returning(["*"])
 
     // create processing for posting;
-    const postings = await postModel.query()
+    const postings = await modelPost.query()
     .select(
-      postModel.DB.raw(`
+      modelPost.DB.raw(`
         settings.id AS setting_id,
         forums.id AS forum_id
       `)
@@ -70,8 +70,8 @@ async function postCreate(data, db, rabbitmq) {
     `, { post_id: newPost.id })
 
     if (postings.length) {
-      const progressing = await progressingModel.insertOne({ post_id: newPost.id, type: "posting", progressing_total: postings.length, progressing_amount: 0, status: "waiting" });
-      await postingStatusModel.query().insert(postings.map((posting) => ({ ...posting, progressing_id: progressing.id })))
+      const progressing = await modelProgressing.insertOne({ post_id: newPost.id, type: "posting", progressing_total: postings.length, progressing_amount: 0, status: "waiting" });
+      await modelPostingStatus.query().insert(postings.map((posting) => ({ ...posting, progressing_id: progressing.id })))
       return { post: newPost, progressing }
     }
     return { post: newPost }

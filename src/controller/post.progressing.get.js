@@ -1,22 +1,22 @@
-const { PostModel, ProgressingModel, PostingStatusModel } = require("../db");
+const { ModelPost, ModelProgressing, ModelPostingStatus } = require("../db");
 
 async function progressingGet(data, db) {
   const { id } = data.params;
   const { id: user_id, isAdmin } = data.meta.user
-  const postModel = new PostModel(db);
-  const progressingModel = new ProgressingModel(db);
-  const postingStatusModel = new PostingStatusModel(db);
+  const modelPost = new ModelPost(db);
+  const modelProgressing = new ModelProgressing(db);
+  const modelPostingStatus = new ModelPostingStatus(db);
 
-  const progressing = await progressingModel.findOne({ id });
+  const progressing = await modelProgressing.findOne({ id });
 
-  const post = await postModel.findOne({ id: progressing.post_id });
+  const post = await modelPost.findOne({ id: progressing.post_id });
   if (post.user_id != user_id && !isAdmin) {
     return { status: 403, message: "Not permission" }
   }
 
-  const postingStatus = await postingStatusModel.query().where({ progressing_id: progressing.id })
+  const postingStatus = await modelPostingStatus.query().where({ progressing_id: progressing.id })
     .select(
-      postingStatusModel.DB.raw(`
+      modelPostingStatus.DB.raw(`
         posting_status.id,
         posting_status.status,
         posting_status.message,

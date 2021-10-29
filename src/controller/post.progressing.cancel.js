@@ -1,13 +1,13 @@
-const { ProgressingModel } = require("../db");
+const { ModelProgressing } = require("../db");
 
 async function porgressingCancel(data, db) {
   const { progressing_id } = data.params;
 
-  const progressingModel = new ProgressingModel(db);
+  const modelProgressing = new ModelProgressing(db);
 
-  let progressing = await progressingModel.findOne({ id: progressing_id });
+  let progressing = await modelProgressing.findOne({ id: progressing_id });
   progressing.status = "fail";
-  progressing = await progressingModel.updateOne(progressing);
+  progressing = await modelProgressing.updateOne(progressing);
   
   return { status: 200, data: { progressing } };
 }
