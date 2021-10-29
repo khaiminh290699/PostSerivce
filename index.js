@@ -1,5 +1,5 @@
 const { Kafka, Rabbitmq } = require("./src/ultilities");
-const { postCreate, postList, progressingGet, reprogress, listTimer, postToggle, porgressingCancel } = require("./src/controller");
+const { postCreate, postList, progressingGet, reprogress, timerList, postToggle, porgressingCancel } = require("./src/controller");
 
 const kafka = new Kafka();
 const rabbitmq = new Rabbitmq();
@@ -12,7 +12,7 @@ kafka.consume("post.progressing.get", { groupId: "post.progressing.get" }, progr
 
 kafka.consume("post.progressing.reprogress", { groupId: "post.progressing.reprogress" }, async (data, db) => { return await reprogress(data, db, rabbitmq) })
 
-kafka.consume("post.list.timer", { groupId: "post.list.timer" }, listTimer)
+kafka.consume("post.list.timer", { groupId: "post.list.timer" }, timerList)
 
 kafka.consume("post.toggle", { groupId: "post.toggle" }, postToggle)
 

@@ -1,23 +1,23 @@
-const { PostModel, SettingModel, PostForumModel, ProgressingModel } = require("../db");
+const { ModelPost, ModelSetting, ModelPostForum, ModelProgressing } = require("../db");
 
 async function postGet(data, db) {
-  const { id } = db.params;
+  const { id } = data.params;
 
-  const postModel = new PostModel(db);
-  const settingModel = new SettingModel(db);
-  const postForumModel = new PostForumModel(db);
-  const progressingModel = new ProgressingModel(db);
+  const modelPost = new ModelPost(db);
+  const modelSetting = new ModelSetting(db);
+  const modelPostForum = new ModelPostForum(db);
+  const modelProgressing = new ModelProgressing(db);
 
-  const post = await postModel.findOne({ id, is_deleted: false });
+  const post = await modelPost.findOne({ id });
 
   if (!post) {
     return { status: 404, message: "Post not found" };
   }
   const { id: post_id } = post;
 
-  const accountSettings = await settingModel.query()
+  const accountSettings = await modelSetting.query()
     .select(
-      settingModel.DB.raw(`
+      modelSetting.DB.raw(`
         settings.id AS setting_id,
         accounts.id AS account_id,
         timer_setting.id AS timer_id,
@@ -33,9 +33,9 @@ async function postGet(data, db) {
     .leftJoin("timer_setting", "timer_setting.setting_id", "settings.id")
     .where({ post_id });
 
-  const forums = await postForumModel.query()
+  const forums = await modelPostForum.query()
     .select(
-      postForumModel.DB.raw(`
+      modelPostForum.DB.raw(`
         forums.id AS forum_id,
         webs.id AS web_id,
         forums.forum_name,
@@ -49,7 +49,9 @@ async function postGet(data, db) {
     .join("webs", "webs.id", "forums.web_id")
     .where({ post_id });
 
-  const progressing;
+  const progressing = await modelProgressing.findOne({ post_id });
+
+  return { status: 200, data: { post, accountSettings, forums, progressing } };
 }
 
 module.exports = postGet;

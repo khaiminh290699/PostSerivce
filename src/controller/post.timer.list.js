@@ -1,7 +1,7 @@
 const { ModelSetting } = require("../db");
 const moment = require("moment");
 
-async function listTimer(data, db) {
+async function timerList(data, db) {
   const { inDate, wheres = [], pageIndex, pageSize, order = {}, mode } = data.params;
   const { id: user_id, isAdmin } = data.meta.user
   const modelSetting = new ModelSetting(db);
@@ -71,4 +71,4 @@ async function listTimer(data, db) {
   return { status: 200, data: { timerPosts, totalCount } };
 }
 
-module.exports = listTimer;
+module.exports = timerList;
