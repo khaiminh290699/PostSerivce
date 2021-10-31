@@ -31,15 +31,18 @@ async function timerList(data, db) {
         forums.forum_url,
         COALESCE(posting_status.status, 'waiting') AS status,
         posting_status.updated_at AS actutal_posting_timer,
-        posting_status.message
+        posting_status.message,
+        users.id AS user_id,
+        users.username AS user_username
       `)
     )
     .joinRaw(`
-      JOIN timer_setting ON ( timer_setting.setting_id = settings.id )
+      JOIN forum_setting ON ( forum_setting.setting_id = settings.id AND forum_setting.is_deleted = false )
+      JOIN timer_setting ON ( timer_setting.setting_id = settings.id AND timer_setting.is_deleted = false )
       JOIN accounts ON ( accounts.id = settings.account_id )
       JOIN posts ON ( posts.id = settings.post_id )
-      JOIN post_forum ON ( post_forum.post_id = posts.id )
-      JOIN forums ON ( forums.id = post_forum.forum_id )
+      JOIN users ON ( users.id = posts.user_id )
+      JOIN forums ON ( forums.id = forum_setting.forum_id )
       JOIN webs ON ( webs.id = forums.web_id AND webs.id = accounts.web_id )
       LEFT JOIN posting_status ON ( posting_status.setting_id = settings.id AND posting_status.forum_id = forums.id AND posting_status.posting_type = 'timer_post' )
     `)

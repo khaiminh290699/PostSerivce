@@ -3,10 +3,11 @@ const Model = require("./model")
 const ModelAccount = require("./model/account-model");
 const ModelPost = require("./model/post-model");
 const ModelSetting = require("./model/setting-model")
-const ModelProgressing = require("./model/post-forum-model");
-const ModelPostForum = require("./model/progressing-model")
+const ModelProgressing = require("./model/progressing-model");
+const ModelPostForum = require("./model/post-forum-model")
 const ModelPostingStatus = require("./model/posting-status-model");
 const ModelTimerSetting = require("./model/timer-setting-model");
+const ModelForumSetting = require("./model/forum-setting-model");
 
 module.exports = {
   DB,
@@ -17,5 +18,6 @@ module.exports = {
   ModelPostForum,
   ModelProgressing,
   ModelPostingStatus,
-  ModelTimerSetting
+  ModelTimerSetting,
+  ModelForumSetting
 }
