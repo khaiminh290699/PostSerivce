@@ -1,8 +1,8 @@
-const { ModelPost, Model, ModelSetting, ModelPostForum, ModelProgressing, ModelPostingStatus, ModelTimerSetting, ModelForumSetting } = require("../db");
+const { ModelPost, Model, ModelSetting, ModelPostForum, ModelProgressing, ModelPostingStatus, ModelTimerSetting, ModelForumSetting, ModelBackLink } = require("../db");
 const moment = require("moment");
 
 async function postCreate(data, db, rabbitmq) {
-  const { post, forums, settings } = data.params;
+  const { post, forums, settings, backlinks } = data.params;
   const { id: user_id } = data.meta.user
   const model = new Model(db);
 
@@ -51,28 +51,38 @@ async function postCreate(data, db, rabbitmq) {
     const modelPostingStatus = new ModelPostingStatus(db, trx);
     const modelTimerSetting = new ModelTimerSetting(db, trx);
     const modelForumSetting = new ModelForumSetting(db, trx);
+    const modelBackLink = new ModelBackLink(db, trx);
 
 
     // create post;
     const newPost = await modelPost.insertOne({ ...post, user_id });
     
     const settingPost = await modelSetting.query().insert(settings.map((setting) => ({ account_id: setting.account_id, post_id: newPost.id }))).returning(["*"]);
-    await modelTimerSetting.query().insert(timerSettings.map(timerSetting => {
-      const setting = settingPost.filter((setting) => setting.account_id === timerSetting.account_id)[0];
-      return {
-        setting_id: setting.id,
-        timer_at: moment(timerSetting.timer_at).startOf("minute").format("HH:mm"),
-        from_date: moment(timerSetting.from_date).startOf("date"),
-        to_date: moment(timerSetting.to_date).endOf("date")
-      }
-    }))
-    await modelForumSetting.query().insert(forumSettings.map(forumSetting => {
-      const setting = settingPost.filter((setting) => setting.account_id === forumSetting.account_id)[0];
-      return {
-        setting_id: setting.id,
-        forum_id: forumSetting.forum_id
-      }
-    }))
+    if (timerSettings.length) {
+      await modelTimerSetting.query().insert(timerSettings.map(timerSetting => {
+        const setting = settingPost.filter((setting) => setting.account_id === timerSetting.account_id)[0];
+        return {
+          setting_id: setting.id,
+          timer_at: moment(timerSetting.timer_at).startOf("minute").format("HH:mm"),
+          from_date: moment(timerSetting.from_date).startOf("date"),
+          to_date: moment(timerSetting.to_date).endOf("date")
+        }
+      }))
+    }
+
+    if (forumSettings.length) {
+      await modelForumSetting.query().insert(forumSettings.map(forumSetting => {
+        const setting = settingPost.filter((setting) => setting.account_id === forumSetting.account_id)[0];
+        return {
+          setting_id: setting.id,
+          forum_id: forumSetting.forum_id
+        }
+      }))
+    }
+
+    if (backlinks.length) {
+      await modelBackLink.query().update({ post_id: newPost.id }).whereNull("post_id").whereIn("id", backlinks);
+    }
 
     await modelPostForum.query().insert(forums.map((forum) => ({ forum_id: forum, post_id: newPost.id }))).returning(["*"])
 

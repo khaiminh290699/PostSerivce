@@ -8,6 +8,11 @@ const porgressingCancel = require("./post.progressing.cancel")
 const reprogress = require("./post.progressing.reprogress");
 const timerList = require("./post.timer.list");
 
+const backlinkCreate = require("./post.backlink.create");
+const backlinkDelete = require("./post.backlink.delete");
+const backlinkGet = require("./post.backlink.get");
+
+
 module.exports = {
   postGet,
   postList,
@@ -18,4 +23,7 @@ module.exports = {
   porgressingCancel,
   reprogress,
   timerList,
+  backlinkGet,
+  backlinkDelete,
+  backlinkCreate
 }
