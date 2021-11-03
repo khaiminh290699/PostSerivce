@@ -44,7 +44,6 @@ async function timerList(data, db) {
       JOIN users ON ( users.id = posts.user_id )
       JOIN forums ON ( forums.id = forum_setting.forum_id )
       JOIN webs ON ( webs.id = forums.web_id AND webs.id = accounts.web_id )
-      LEFT JOIN posting_status ON ( posting_status.setting_id = settings.id AND posting_status.forum_id = forums.id AND posting_status.posting_type = 'timer_post' )
     `)
     .whereRaw(`
       accounts.disable = false
@@ -52,6 +51,17 @@ async function timerList(data, db) {
     `)
 
   if (inDate) {
+    query.joinRaw(`
+      LEFT JOIN posting_status ON ( 
+        posting_status.setting_id = settings.id 
+        AND posting_status.forum_id = forums.id AND posting_status.is_timer = true 
+        AND posting_status.updated_at BETWEEN :from AND :to
+      )
+    `, { 
+      from: moment(inDate).startOf("date"),
+      to: moment(inDate).endOf("date")
+    })
+    
     query.whereRaw(`
       timer_setting.from_date <= :from
       AND timer_setting.to_date >= :from
@@ -61,6 +71,15 @@ async function timerList(data, db) {
       from: moment(inDate).startOf("date"),
       to: moment(inDate).endOf("date")
     })
+  } else {
+
+    query.joinRaw(`
+      LEFT JOIN posting_status ON ( 
+        posting_status.setting_id = settings.id 
+        AND posting_status.forum_id = forums.id AND posting_status.is_timer = true 
+      )
+    `)
+
   }
 
   if (mode != "admin") {

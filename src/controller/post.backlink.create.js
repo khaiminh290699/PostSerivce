@@ -1,20 +1,15 @@
 const { ModelBackLink } = require("../db");
 
 async function backlinkCreate(data, db) {
-  const { web_host, link_url } = data.params;
+  const { link_url } = data.params;
 
   const modelBacklink = new ModelBackLink(db);
   
-  const backlink = await modelBacklink.insertOne({
+  const result = await modelBacklink.query().insert({
     link_url,
-    backlink_url: `${web_host}`
-  })
+  }).onConflict(["link_url"]).ignore().returning(["*"]);
 
-  backlink.backlink_url = `${web_host}/${backlink.id}/:post_id/:forum_id/:account_id`
-  await modelBacklink.updateOne(backlink);
-  
-
-  return { status: 200, data: { backlink } };
+  return { status: 200, data: { backlink: result[0] } };
 } 
 
 module.exports = backlinkCreate;

@@ -1,4 +1,4 @@
-const { ModelPost, Model, ModelSetting, ModelPostForum, ModelProgressing, ModelPostingStatus, ModelTimerSetting, ModelForumSetting, ModelBackLink } = require("../db");
+const { ModelPost, Model, ModelSetting, ModelPostForum, ModelProgressing, ModelPostingStatus, ModelTimerSetting, ModelForumSetting, ModelBackLink, ModelProgressingPostStatus } = require("../db");
 const moment = require("moment");
 
 async function postCreate(data, db, rabbitmq) {
@@ -49,10 +49,9 @@ async function postCreate(data, db, rabbitmq) {
     const modelPostForum = new ModelPostForum(db, trx);
     const modelProgressing = new ModelProgressing(db, trx);
     const modelPostingStatus = new ModelPostingStatus(db, trx);
+    const modelProgressingPostStatus = new ModelProgressingPostStatus(db, trx);
     const modelTimerSetting = new ModelTimerSetting(db, trx);
     const modelForumSetting = new ModelForumSetting(db, trx);
-    const modelBackLink = new ModelBackLink(db, trx);
-
 
     // create post;
     const newPost = await modelPost.insertOne({ ...post, user_id });
@@ -80,10 +79,6 @@ async function postCreate(data, db, rabbitmq) {
       }))
     }
 
-    if (backlinks.length) {
-      await modelBackLink.query().update({ post_id: newPost.id }).whereNull("post_id").whereIn("id", backlinks);
-    }
-
     await modelPostForum.query().insert(forums.map((forum) => ({ forum_id: forum, post_id: newPost.id }))).returning(["*"])
 
     // create processing for posting;
@@ -106,10 +101,15 @@ async function postCreate(data, db, rabbitmq) {
     `, { post_id: newPost.id })
 
     if (postings.length) {
-      const progressing = await modelProgressing.insertOne({ post_id: newPost.id, type: "posting", progressing_total: postings.length, progressing_amount: 0, status: "waiting" });
-      await modelPostingStatus.query().insert(postings.map((posting) => ({ ...posting, progressing_id: progressing.id })))
+      const progressing = await modelProgressing.insertOne({ post_id: newPost.id, total: postings.length, done: 0, status: "waiting" });
+      
+      const postingStatuses = await modelPostingStatus.query().insert(postings.map((posting) => ({ ...posting }))).returning(["id"]);
+
+      await modelProgressingPostStatus.query().insert(postingStatuses.map((postStatus) => ({ posting_status_id: postStatus.id, progressing_id: progressing.id })))
+      
       return { post: newPost, progressing }
     }
+    
     return { post: newPost }
   })
 

@@ -31,6 +31,7 @@ async function progressingGet(data, db) {
       `)
     )
     .joinRaw(`
+      JOIN progressing_post_status ON ( progressing_post_status.posting_status_id = posting_status.id )
       JOIN forums ON ( forums.id = posting_status.forum_id )
       JOIN settings ON ( settings.id = posting_status.setting_id )
       JOIN accounts ON ( accounts.id = settings.account_id )
