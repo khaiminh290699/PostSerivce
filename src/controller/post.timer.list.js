@@ -62,15 +62,15 @@ async function timerList(data, db) {
       to: moment(inDate).endOf("date")
     })
     
-    query.whereRaw(`
-      timer_setting.from_date <= :from
-      AND timer_setting.to_date >= :from
-      AND timer_setting.from_date <= :to
-      AND timer_setting.to_date >= :to
-    `, {
-      from: moment(inDate).startOf("date"),
-      to: moment(inDate).endOf("date")
-    })
+    // query.whereRaw(`
+    //   timer_setting.from_date <= :from
+    //   AND timer_setting.to_date >= :from
+    //   AND timer_setting.from_date <= :to
+    //   AND timer_setting.to_date >= :to
+    // `, {
+    //   from: moment(inDate).startOf("date"),
+    //   to: moment(inDate).endOf("date")
+    // })
   } else {
 
     query.joinRaw(`
