@@ -56,7 +56,7 @@ async function postCreate(data, db, rabbitmq) {
     // create post;
     const newPost = await modelPost.insertOne({ ...post, user_id });
     
-    const settingPost = await modelSetting.query().insert(settings.map((setting) => ({ account_id: setting.account_id, post_id: newPost.id }))).returning(["*"]);
+    const settingPost = await modelSetting.query().insert(settings.map((setting) => ({ account_id: setting.account_id, is_create_only: setting.is_create_only, post_id: newPost.id }))).returning(["*"]);
     if (timerSettings.length) {
       await modelTimerSetting.query().insert(timerSettings.map(timerSetting => {
         const setting = settingPost.filter((setting) => setting.account_id === timerSetting.account_id)[0];
@@ -98,6 +98,7 @@ async function postCreate(data, db, rabbitmq) {
       accounts.web_id = forums.web_id
       AND posts.id = :post_id
       AND forum_setting.is_deleted = false
+      AND settings.is_create_only = false
     `, { post_id: newPost.id })
 
     if (postings.length) {

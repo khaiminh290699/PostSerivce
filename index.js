@@ -1,5 +1,5 @@
 const { Kafka, Rabbitmq } = require("./src/ultilities");
-const { postCreate, postList, progressingGet, reprogress, timerList, postToggle, porgressingCancel, postGet, backlinkCreate, backlinkDelete, backlinkGet } = require("./src/controller");
+const { postCreate, postList, progressingGet, reprogress, timerList, postToggle, porgressingCancel, postGet, backlinkCreate, backlinkDelete, backlinkGet, postUpdate } = require("./src/controller");
 const kafka = new Kafka();
 const rabbitmq = new Rabbitmq();
 
@@ -8,6 +8,8 @@ kafka.consume("post.get", { groupId: "post.get" }, postGet);
 kafka.consume("post.list", { groupId: "post.list" }, postList);
 
 kafka.consume("post.create", { groupId: "post.create" }, async (data, db) => { return await postCreate(data, db, rabbitmq) })
+
+kafka.consume("post.update", { groupId: "post.update" }, postUpdate)
 
 kafka.consume("post.toggle", { groupId: "post.toggle" }, postToggle);
 
