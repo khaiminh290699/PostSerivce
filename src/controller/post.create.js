@@ -2,7 +2,7 @@ const { ModelPost, Model, ModelSetting, ModelPostForum, ModelProgressing, ModelP
 const moment = require("moment");
 
 async function postCreate(data, db, rabbitmq) {
-  const { post, forums, settings, backlinks } = data.params;
+  const { post, forums, settings } = data.params;
   const { id: user_id } = data.meta.user
   const model = new Model(db);
 
@@ -28,20 +28,12 @@ async function postCreate(data, db, rabbitmq) {
     return list
   }, [])
 
-  let invalid = false;
   const forumSettings = settings.reduce((list, setting) => {
-    if (!setting.forums || !setting.forums.length) {
-      invalid = true;
-    }
     if (setting.forums) {
       list.push(...setting.forums.map(forum => ({ forum_id: forum.id, account_id: setting.account_id })));
     } 
     return list
   }, [])
-
-  if (invalid) {
-    return { status: 400, message: "Bad request" };
-  }
 
   const result = await model.openTransaction(async (trx) => {
     const modelPost = new ModelPost(db, trx);
@@ -56,12 +48,13 @@ async function postCreate(data, db, rabbitmq) {
     // create post;
     const newPost = await modelPost.insertOne({ ...post, user_id });
     
-    const settingPost = await modelSetting.query().insert(settings.map((setting) => ({ account_id: setting.account_id, is_create_only: setting.is_create_only, post_id: newPost.id }))).returning(["*"]);
+    const settingPost = await modelSetting.query().insert(settings.map((setting) => ({ account_id: setting.account_id, post_id: newPost.id }))).returning(["*"]);
     if (timerSettings.length) {
       await modelTimerSetting.query().insert(timerSettings.map(timerSetting => {
         const setting = settingPost.filter((setting) => setting.account_id === timerSetting.account_id)[0];
         return {
           setting_id: setting.id,
+          forum_id: timerSetting.forum_id,
           timer_at: moment(timerSetting.timer_at).startOf("minute").format("HH:mm"),
           from_date: moment(timerSetting.from_date).startOf("date"),
           to_date: moment(timerSetting.to_date).endOf("date")
@@ -98,7 +91,6 @@ async function postCreate(data, db, rabbitmq) {
       accounts.web_id = forums.web_id
       AND posts.id = :post_id
       AND forum_setting.is_deleted = false
-      AND settings.is_create_only = false
     `, { post_id: newPost.id })
 
     if (postings.length) {

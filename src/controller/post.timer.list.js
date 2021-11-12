@@ -2,7 +2,7 @@ const { ModelSetting } = require("../db");
 const moment = require("moment");
 
 async function timerList(data, db) {
-  const { inDate, wheres = [], pageIndex, pageSize, order = {}, mode } = data.params;
+  const { inDate, wheres = [], pageIndex, pageSize, order = { "timer_at": -1 }, mode } = data.params;
   const { id: user_id, isAdmin } = data.meta.user
   const modelSetting = new ModelSetting(db);
 
@@ -33,16 +33,16 @@ async function timerList(data, db) {
         posting_status.updated_at AS actutal_posting_timer,
         posting_status.message,
         users.id AS user_id,
-        users.username AS user_username
+        users.username AS user_username,
+        timer_setting.id AS timer_setting_id
       `)
     )
     .joinRaw(`
-      JOIN forum_setting ON ( forum_setting.setting_id = settings.id AND forum_setting.is_deleted = false )
       JOIN timer_setting ON ( timer_setting.setting_id = settings.id AND timer_setting.is_deleted = false )
       JOIN accounts ON ( accounts.id = settings.account_id )
       JOIN posts ON ( posts.id = settings.post_id )
       JOIN users ON ( users.id = posts.user_id )
-      JOIN forums ON ( forums.id = forum_setting.forum_id )
+      JOIN forums ON ( forums.id = timer_setting.forum_id )
       JOIN webs ON ( webs.id = forums.web_id AND webs.id = accounts.web_id )
     `)
     .whereRaw(`
@@ -52,9 +52,11 @@ async function timerList(data, db) {
 
   if (inDate) {
     query.joinRaw(`
+      LEFT JOIN timer_status ON ( timer_status.timer_setting_id = timer_setting.id )
       LEFT JOIN posting_status ON ( 
-        posting_status.setting_id = settings.id 
-        AND posting_status.forum_id = forums.id AND posting_status.is_timer = true 
+        posting_status.id = timer_status.posting_status_id 
+        AND posting_status.forum_id = forums.id
+        AND posting_status.is_timer = true 
         AND posting_status.updated_at BETWEEN :from AND :to
       )
     `, { 

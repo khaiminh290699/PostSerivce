@@ -21,7 +21,6 @@ async function postGet(data, db) {
     .select(
       modelSetting.DB.raw(`
         settings.id AS setting_id,
-        settings.is_create_only,
         accounts.id AS account_id,
         accounts.username,
         accounts.password,
@@ -35,8 +34,19 @@ async function postGet(data, db) {
     .where({ post_id });
 
   const timerSettings = await modelTimerSetting.query()
+    .select(
+      modelTimerSetting.DB.raw(`
+        timer_setting.*,
+        forum_name,
+        forum_url,
+        web_name,
+        web_url
+      `)
+    )
+    .join("forums", "forums.id", "timer_setting.forum_id")
+    .join("webs", "webs.id", "forums.web_id")
     .whereIn("setting_id", accountSettings.map(accountSetting => accountSetting.setting_id))
-    .where({ is_deleted: false });
+    .whereRaw(`timer_setting.is_deleted = false`);
     
   const forumSettings = await modelForumSetting.query()
     .select(
