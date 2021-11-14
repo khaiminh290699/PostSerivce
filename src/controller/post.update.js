@@ -68,13 +68,6 @@ async function postUpdate(data, db) {
     if (timerSettings.length) {
       await modelTimerSetting.query().insert(timerSettings.map(timerSetting => {
         const setting = newSettings.filter((setting) => setting.account_id === timerSetting.account_id)[0];
-        console.log({
-          setting_id: setting.id,
-          forum_id: timerSetting.forum_id,
-          timer_at: moment(timerSetting.timer_at).isValid() ? moment(timerSetting.timer_at).startOf("minute").format("HH:mm") : timerSetting.timer_at,
-          from_date: moment(timerSetting.from_date).startOf("date"),
-          to_date: moment(timerSetting.to_date).endOf("date")
-        })
         return {
           setting_id: setting.id,
           forum_id: timerSetting.forum_id,

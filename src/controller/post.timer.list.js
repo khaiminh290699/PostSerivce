@@ -34,7 +34,8 @@ async function timerList(data, db) {
         posting_status.message,
         users.id AS user_id,
         users.username AS user_username,
-        timer_setting.id AS timer_setting_id
+        timer_setting.id AS timer_setting_id,
+        forums.is_deleted AS forum_deleted
       `)
     )
     .joinRaw(`

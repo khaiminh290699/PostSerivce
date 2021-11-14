@@ -1,25 +1,12 @@
-const { ModelPost, Model, ModelSetting, ModelPostForum, ModelProgressing, ModelPostingStatus, ModelTimerSetting, ModelForumSetting, ModelBackLink, ModelProgressingPostStatus } = require("../db");
+const { ModelPost, Model, ModelSetting, ModelProgressing, ModelPostingStatus, ModelTimerSetting, ModelForumSetting, ModelBackLink, ModelProgressingPostStatus } = require("../db");
 const moment = require("moment");
 
 async function postCreate(data, db, rabbitmq) {
-  const { post, forums, settings } = data.params;
+  const { post, settings } = data.params;
   const { id: user_id } = data.meta.user
   const model = new Model(db);
 
   const modelPost = new ModelPost(db);
-  const existTitle = await modelPost.query().joinRaw(`
-      JOIN post_forum ON post_forum.post_id = posts.id
-    `)
-    .whereRaw(`
-      posts.title = :title
-      AND posts.is_deleted = false
-    `, { title: post.title })
-    .whereIn(modelPost.DB.raw(`post_forum.forum_id`), forums)
-    .first();
-
-  if (existTitle) {
-    return { status: 400, message: "Title exists in this forum !" }
-  }
 
   const timerSettings = settings.reduce((list, setting) => {
     if (setting.timers) {
@@ -38,7 +25,6 @@ async function postCreate(data, db, rabbitmq) {
   const result = await model.openTransaction(async (trx) => {
     const modelPost = new ModelPost(db, trx);
     const modelSetting = new ModelSetting(db, trx);
-    const modelPostForum = new ModelPostForum(db, trx);
     const modelProgressing = new ModelProgressing(db, trx);
     const modelPostingStatus = new ModelPostingStatus(db, trx);
     const modelProgressingPostStatus = new ModelProgressingPostStatus(db, trx);
@@ -72,7 +58,6 @@ async function postCreate(data, db, rabbitmq) {
       }))
     }
 
-    await modelPostForum.query().insert(forums.map((forum) => ({ forum_id: forum, post_id: newPost.id }))).returning(["*"])
 
     // create processing for posting;
     const postings = await modelPost.query()
