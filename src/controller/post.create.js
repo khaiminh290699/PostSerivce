@@ -6,7 +6,15 @@ async function postCreate(data, db, rabbitmq) {
   const { id: user_id } = data.meta.user
   const model = new Model(db);
 
+  if (!post || !post.title || !post.content || !settings) {
+    return { status: 400, message: "Missing params" };
+  }
+
   const modelPost = new ModelPost(db);
+  const existTitle = await modelPost.findOne({ title: post.title, is_deleted: false });
+  if (existTitle) {
+    return { status: 400, message: "Title exist" };
+  }
 
   const timerSettings = settings.reduce((list, setting) => {
     if (setting.timers) {

@@ -1,4 +1,4 @@
-const { ModelPost, ModelProgressing, ModelPostingStatus } = require("../db");
+const { ModelPost, ModelProgressing } = require("../db");
 
 async function postToggle(data, db) {
   const { post_id, mode } = data.params;
@@ -20,6 +20,11 @@ async function postToggle(data, db) {
 
   if (post.is_deleted === false) {
     await modelProgressing.query().update({ status: "fail" }).where({ post_id: post.id }).returning(["id"]);
+  } else {
+    const existTitle = await modelPost.query().where({ title: post.title, is_deleted: false });
+    if (existTitle) {
+      return { status: 400, message: "Title exist" }
+    }
   }
   
   post.is_deleted = !post.is_deleted;
