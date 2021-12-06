@@ -10,23 +10,7 @@ async function postList(data, db) {
   
   const modelPost = new ModelPost(db);
 
-  const query = modelPost.query().joinRaw(`
-    JOIN users ON users.id = posts.user_id
-  `)
-  .select(
-    modelPost.DB.raw(`
-      COUNT(*) OVER(),
-      posts.*,
-      substring(regexp_replace(posts.content, E'<[^>]+>', '', 'gi') from 0 for 100) AS content,
-      users.username
-    `)
-  )
-
-  if (mode != "admin") {
-    query.where("user_id", "=", user_id);
-  }
-
-  const posts = await modelPost.queryByCondition(query, wheres, pageIndex, pageSize, order);
+  const posts = await modelPost.list(mode, user_id, wheres, pageIndex, pageSize, order);
   const total = posts[0] ? +posts[0].count : 0;
   return { status: 200, data: { posts, total } };
 }

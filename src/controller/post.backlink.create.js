@@ -5,9 +5,7 @@ async function backlinkCreate(data, db) {
 
   const modelBacklink = new ModelBackLink(db);
   
-  const result = await modelBacklink.query().insert({
-    link_url,
-  }).onConflict(["link_url"]).ignore().returning(["*"]);
+  const result = await modelBacklink.create(link_url);
 
   return { status: 200, data: { backlink: result[0] } };
 } 

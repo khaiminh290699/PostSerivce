@@ -10,6 +10,7 @@ const ModelForumSetting = require("./model/forum-setting-model");
 const ModelBackLink = require("./model/backlink-model");
 const ModelStatisticBackLink = require("./model/statistic-backlink-model");
 const ModelProgressingPostStatus = require("./model/progressing-post-status-model");
+const ModelTimerStatus = require("./model/timer-status-model");
 
 module.exports = {
   DB,
@@ -23,5 +24,6 @@ module.exports = {
   ModelForumSetting,
   ModelBackLink,
   ModelStatisticBackLink,
-  ModelProgressingPostStatus
+  ModelProgressingPostStatus,
+  ModelTimerStatus
 }
