@@ -4,7 +4,11 @@ class ModelBackLink extends Model {
   tableName = "backlinks";
 
   create = async (link_url) => {
-    return await this.query().insert({ link_url }).onConflict(["link_url"]).ignore().returning(["*"]);
+    const backlink = await this.findOne({ link_url });
+    if (backlink) {
+      return backlink;
+    }
+    return await this.insertOne({ link_url });
   }
 
   getOne = async (backlink_id) => {

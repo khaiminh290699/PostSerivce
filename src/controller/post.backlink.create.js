@@ -5,9 +5,9 @@ async function backlinkCreate(data, db) {
 
   const modelBacklink = new ModelBackLink(db);
   
-  const result = await modelBacklink.create(link_url);
+  const backlink = await modelBacklink.create(link_url);
 
-  return { status: 200, data: { backlink: result[0] } };
+  return { status: 200, data: { backlink } };
 } 
 
 module.exports = backlinkCreate;
