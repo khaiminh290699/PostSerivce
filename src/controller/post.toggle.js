@@ -21,7 +21,7 @@ async function postToggle(data, db) {
   if (post.is_deleted === false) {
     await modelProgressing.query().update({ status: "fail" }).where({ post_id: post.id }).returning(["id"]);
   } else {
-    const existTitle = await modelPost.query().where({ title: post.title, is_deleted: false });
+    const existTitle = await modelPost.query().where({ title: post.title, is_deleted: false }).where("id", "!=", post.id).first();
     if (existTitle) {
       return { status: 400, message: "Title exist" }
     }

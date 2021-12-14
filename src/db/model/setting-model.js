@@ -43,6 +43,7 @@ class ModelSetting extends Model {
         accounts.id AS account_id,
         accounts.username,
         accounts.password,
+        accounts.disable,
         webs.web_name,
         webs.web_url,
         webs.web_key,

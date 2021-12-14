@@ -31,7 +31,9 @@ class ModelTimerStatus extends Model {
           users.id AS user_id,
           users.username AS user_username,
           timer_setting.id AS timer_setting_id,
-          forums.is_deleted AS forum_deleted
+          forums.is_deleted AS forum_deleted,
+          accounts.disable AS account_disable,
+          posts.is_deleted AS post_delete
         `)
       )
       .joinRaw(`
@@ -42,10 +44,10 @@ class ModelTimerStatus extends Model {
         JOIN forums ON ( forums.id = timer_setting.forum_id )
         JOIN webs ON ( webs.id = forums.web_id AND webs.id = accounts.web_id )
       `)
-      .whereRaw(`
-        accounts.disable = false
-        AND posts.is_deleted = false
-      `)
+      // .whereRaw(`
+      //   accounts.disable = false
+      //   AND posts.is_deleted = false
+      // `)
   
     if (inDate) {
       query.joinRaw(`

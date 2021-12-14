@@ -35,7 +35,7 @@ class Kafka {
         const data = JSON.parse(message.value.toString());
         const db = new DB();
         try {
-          const result = await callback(data, db);
+          const result = await callback(data, db.DB);
           if (data.responseId) {
             await this.produce(data.responseId, null, result);
           }
